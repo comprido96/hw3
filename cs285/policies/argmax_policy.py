@@ -1,4 +1,6 @@
+from cs285.critics.dqn_critic import DQNCritic
 import numpy as np
+
 
 class ArgMaxPolicy(object):
 
@@ -6,12 +8,12 @@ class ArgMaxPolicy(object):
         self.critic = critic
 
     def get_action(self, obs):
-        if len(obs.shape) > 3:
-            observation = obs
-        else:
-            observation = obs[None]
-        
-        ## TODO return the action that maxinmizes the Q-value 
+        if len(obs.shape) <= 3:
+            obs = obs[None]
+
+        # return the action that maxinmizes the Q-value
         # at the current observation as the output
-        action = self.critic.qa_values(obs).argmax()
-        return action.squeeze()
+        q = self.critic.qa_values(obs)
+        acs = q.argmax(1)
+
+        return acs.squeeze()

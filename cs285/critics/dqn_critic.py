@@ -1,5 +1,6 @@
 from .base_critic import BaseCritic
 import torch
+import numpy as np
 import torch.optim as optim
 from torch.nn import utils
 from torch import nn
@@ -62,23 +63,21 @@ class DQNCritic(BaseCritic):
         reward_n = ptu.from_numpy(reward_n)
         terminal_n = ptu.from_numpy(terminal_n)
 
-        qa_t_values = self.q_net(ob_no) # each row is a timestep, each column an action
-    
+        qa_t_values = self.q_net(ob_no)
         q_t_values = torch.gather(
-            qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1) #unsqueeze: list of lists 
-        # q_t_values: each row is a timestep which contains the q-value of the chosen action
+            qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
 
         # compute the Q-values from the target network 
-        qa_tp1_values = self.q_net_target(next_ob_no) # same as qa_t_values (tp1 == t plus 1)
+        qa_tp1_values = self.q_net_target(next_ob_no)
 
         if self.double_q:
             # You must fill this part for Q2 of the Q-learning portion of the homework.
             # In double Q-learning, the best action is selected using the Q-network that
             # is being updated, but the Q-value for this action is obtained from the
             # target Q-network. See page 5 of https://arxiv.org/pdf/1509.06461.pdf for more details.
-            best_action_tp1 = self.q_net(next_ob_no).argmax(1)
+            ac_tp1 = self.q_net(next_ob_no).argmax(1)
             q_tp1 = torch.gather(
-            qa_tp1_values, 1, best_action_tp1.unsqueeze(1)).squeeze(1)
+                qa_tp1_values, 1, ac_tp1.unsqueeze(1)).squeeze(1)
         else:
             q_tp1, _ = qa_tp1_values.max(dim=1)
 
@@ -106,7 +105,7 @@ class DQNCritic(BaseCritic):
         ):
             target_param.data.copy_(param.data)
 
-    def qa_values(self, obs):
+    def qa_values(self, obs) -> np.ndarray:
         obs = ptu.from_numpy(obs)
         qa_values = self.q_net(obs)
         return ptu.to_numpy(qa_values)
